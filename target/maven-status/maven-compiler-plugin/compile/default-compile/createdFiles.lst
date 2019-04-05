@@ -1,0 +1,10 @@
+com/br/selecao/uol/UolApplication.class
+com/br/selecao/uol/model/domain/MetaWeather.class
+com/br/selecao/uol/model/repositorio/ClienteRepositorio.class
+com/br/selecao/uol/model/repositorio/MetaWeatherRepositorio.class
+com/br/selecao/uol/model/domain/Cliente.class
+com/br/selecao/uol/model/repositorio/IpVigilanteRepositorio.class
+com/br/selecao/uol/model/teste.class
+com/br/selecao/uol/controller/ClienteController.class
+com/br/selecao/uol/model/domain/IpVigilante.class
+com/br/selecao/uol/model/service/ClienteServico.class
