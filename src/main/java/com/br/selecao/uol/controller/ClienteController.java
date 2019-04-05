@@ -5,10 +5,10 @@ import com.br.selecao.uol.Type.Chaves;
 import com.br.selecao.uol.model.domain.Cliente;
 import com.br.selecao.uol.model.domain.Config;
 import com.br.selecao.uol.model.domain.IpVigilante;
-import com.br.selecao.uol.model.service.ClienteServico;
-import com.br.selecao.uol.model.service.ConfigServico;
-import com.br.selecao.uol.model.service.IpVigilanteServico;
-import com.br.selecao.uol.model.service.RestServico;
+import com.br.selecao.uol.model.domain.MetaWeather;
+import com.br.selecao.uol.model.service.*;
+import com.br.selecao.uol.util.DateUtil;
+import com.br.selecao.uol.util.JsonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,40 +36,61 @@ public class ClienteController {
     @Autowired
     private IpVigilanteServico ipVigilanteServico;
 
+    @Autowired
+    private MetaWeatherServico metaWeatherServico;
+
     private RestServico restService = new RestServico();
+
+    private static String complementoUrlIpVigilante = "/city_name";
+    private static String formatoDate = "yyyy/MM/dd";
+
 
     @ResponseBody
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity adicionaCliente(@RequestBody Cliente cliente, HttpServletRequest request) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
             String ipAddress = request.getRemoteAddr();
+            ipAddress = "172.217.30.67";
+            String today = DateUtil.formatDate(new Date(), formatoDate);
 
             Config configIpVigilante = configServico.buscarPorChave(Chaves.URL_IP_VIGILANTE.toString());
             Config configWeatherCidade = configServico.buscarPorChave(Chaves.URL_META_WEATHER_CIDADE.toString());
             Config configWeatherId = configServico.buscarPorChave(Chaves.URL_META_WEATHER_ID.toString());
 
-            ResponseEntity<String> resultadoIpVigilante = restService.restPorUrlEEntidade(configIpVigilante.getValor()+"164.163.92.6"+"/city_name");
-            JsonNode rootNode = mapper.readTree(resultadoIpVigilante.getBody());
-            String cidade = rootNode.get("data").get("city_name").toString().replace("\"","");
+            ResponseEntity<String> resultadoIpVigilante = restService.restPorUrlEEntidade(configIpVigilante.getValor() + ipAddress + complementoUrlIpVigilante);
+
+            String cidade = (
+                    JsonUtil.readTree(
+                            resultadoIpVigilante.getBody())
+            )
+                    .get("data")
+                    .get("city_name")
+                    .toString()
+                    .replace(
+                            "\"", ""
+                    );
+
             ipVigilanteServico.adicionaIpVigilante(ipAddress, cidade);
 
-            ResponseEntity<String> resultadoWetherCidade = restService.restPorUrlEEntidade(configWeatherCidade.getValor()+"Brasília");
-            JsonNode rootNodeCidade = mapper.readTree(resultadoWetherCidade.getBody());
-            String woeid = rootNodeCidade.get(0).get("woeid").toString();
+            cidade = cidade.replace(" ", "+");
+            ResponseEntity<String> resultadoWetherCidade = restService.restPorUrlEEntidade(configWeatherCidade.getValor() + cidade);
+
+            String woeid = JsonUtil.percorreJsonNode((JsonUtil.readTree(resultadoWetherCidade.getBody())), "woeid");
 
 
-            ResponseEntity<String> resultadoWetherId = restService.restPorUrlEEntidade(configWeatherId.getValor()+woeid+"/2019/3/31");
+            ResponseEntity<String> resultadoWetherId = restService.restPorUrlEEntidade(configWeatherId.getValor() + woeid + "/" + today);
 
+            String tempMax = JsonUtil.percorreJsonNode((JsonUtil.readTree(resultadoWetherId.getBody())), "max_temp");
+            String tempMin = JsonUtil.percorreJsonNode((JsonUtil.readTree(resultadoWetherId.getBody())), "min_temp");
 
+            MetaWeather metaWeather = metaWeatherServico.adicionaMetaWeather(new MetaWeather(tempMax, tempMin));
+
+            cliente.setMetaWeather(metaWeather);
             Cliente clienteAdicionado = clienteServico.adicionaCliente(cliente);
-
-
-
 
             return new ResponseEntity<>(clienteAdicionado, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Erro ao inserir novo cliente!", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -91,7 +114,7 @@ public class ClienteController {
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity deletaPorId(@PathVariable("id") Integer id) {
         clienteServico.deletaPorId(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>("Deletado com Sucesso!",HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}/{novoNome}/{novaIdade}", method = RequestMethod.PUT)

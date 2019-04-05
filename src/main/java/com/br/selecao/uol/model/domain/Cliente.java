@@ -1,5 +1,6 @@
 package com.br.selecao.uol.model.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -9,11 +10,12 @@ import javax.persistence.*;
 public class Cliente {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String nome;
     private Integer idade;
 
+    @JsonIgnore //Para trazer essa propriedade no metodo GET basta retirar a anotação de JsonIgnore (Não ficou claro no enunciado do teste)
     @OneToOne
     private MetaWeather metaWeather;
 

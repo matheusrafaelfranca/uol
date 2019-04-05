@@ -9,10 +9,18 @@ import javax.persistence.*;
 public class MetaWeather {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String tempMax;
     private String tempMin;
 
+    public MetaWeather(String tempMax, String tempMin) {
+        this.tempMax = tempMax;
+        this.tempMin = tempMin;
+    }
+
+    public MetaWeather() {
+
+    }
 }
