@@ -1,23 +1,19 @@
 package com.br.selecao.uol.controller;
 
 
-import com.br.selecao.uol.Type.Chaves;
+import com.br.selecao.uol.type.Chaves;
 import com.br.selecao.uol.model.domain.Cliente;
 import com.br.selecao.uol.model.domain.Config;
-import com.br.selecao.uol.model.domain.IpVigilante;
 import com.br.selecao.uol.model.domain.MetaWeather;
 import com.br.selecao.uol.model.service.*;
 import com.br.selecao.uol.util.DateUtil;
 import com.br.selecao.uol.util.JsonUtil;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -50,7 +46,6 @@ public class ClienteController {
     public ResponseEntity adicionaCliente(@RequestBody Cliente cliente, HttpServletRequest request) {
         try {
             String ipAddress = request.getRemoteAddr();
-            ipAddress = "172.217.30.67";
             String today = DateUtil.formatDate(new Date(), formatoDate);
 
             Config configIpVigilante = configServico.buscarPorChave(Chaves.URL_IP_VIGILANTE.toString());
